@@ -24,6 +24,75 @@ let selected = {
     prevColour: Color.red,
 }
 
+let colourToggles = [
+
+]
+let palette = [Color.red, Color.green, Color.blue, Color.saffron, Color.yellow, Color.pink, Color.purple, Color.secondary, Color.white, Color.black]
+
+function inPalette(colour) {
+    for (const swatch of palette) {
+        if (colour[0] == swatch[0] && colour[1] == swatch[1] && colour[2] == swatch[2]) return true;
+    }
+    return false;
+}
+
+function addColourBarRow() {
+    colourBar.contents.push(new HStack().contains([]).spacing(5))
+}
+
+function addColourBarColour(colour) {
+    colourBar.contents[colourBar.contents.length-1].contents.push(
+        new CheckToggle(35, 35)
+            .background(colour, "default")
+            .background(Color.nudge(colour, 2), "hover")
+            .background(Color.nudge(colour, 4), "pressed")
+            .contains(new Icon(CHECK_ICON), "on")
+            .radio("selected.selectedColour", colour)
+            ,
+    )
+}
+
+function addColourToPalette(colour) {
+    if (!inPalette(colour)) {
+        if (colourBar.contents.length == 0) {
+            addColourBarRow()
+        }
+        else if (colourBar.contents[colourBar.contents.length-1].contents.length == 2) {
+            // make room
+            addColourBarRow()
+        }
+        addColourBarColour(colour)
+        palette.push(colour)
+    }
+}
+
+function deletePaletteColour(colour) {
+    // let i = 0;
+    // for (let i = 0; i < palette.length; i++) {
+    //     if (palette[i][0] == colour[0] && palette[i][1] == colour[1] && palette[i][2] == colour[2]) break;
+    // }
+    let i = palette.indexOf(colour)
+    palette.splice(i, 1);
+    let row =  Math.floor(i/2);
+    let col = i%2;
+    console.log(i, row, col)
+
+    colourBar.contents[row].contents.splice(col, 1);
+    if (colourBar.contents[row].contents.length == 0) {
+        colourBar.contents.splice(row, 1);
+    }
+    else {
+        for (let h = row+1; h < colourBar.contents.length; h++) {
+            let hs = colourBar.contents[h]
+            colourBar.contents[h-1].contents.push(hs.contents.shift())
+            if (hs.contents.length == 0) colourBar.contents.splice(h, 1);
+        }
+    }
+
+
+    selected.selectedColour = ""
+}
+
 let gridSizeInput = new TextInput()
                     .placeholder("Size")
                     .bind("gridSize")
@@ -204,6 +273,28 @@ let controlPanel = new Panel()
         // new Title("Controls"),
         toolbar.align("center"),
         colourBar.align("center"),
+        new HStack().contains([
+            new Button(35, 35)
+                .contains(new Icon(MINUS_ICON))
+                .background(Color.nearInverse, "default")
+                .background(Color.nudge(Color.nearInverse, 2), "hover")
+                .background(Color.nudge(Color.nearInverse, 4), "pressed")
+                .command(() => {
+                    if (palette.length > 0 && selected.selectedColour != "") deletePaletteColour(selected.selectedColour)
+                })
+                ,
+            new Button(35, 35)
+                .contains(new Icon(PLUS_ICON))
+                .background(Color.nearInverse, "default")
+                .background(Color.nudge(Color.nearInverse, 2), "hover")
+                .background(Color.nudge(Color.nearInverse, 4), "pressed")
+                .command(() => {
+                    showColourSelectionWindow = true;
+                    inEditor = false;
+                    colourSelectionWindow.phantom(false)
+                })
+                ,
+        ]).spacing(5)
     ])
     .cornerRadius(0, 10, 10, 0)
 
@@ -222,3 +313,58 @@ let navPanel = new Panel()
             ,
     ])
     .cornerRadius(10, 0, 0, 10)
+
+let showColourSelectionWindow = false;
+let rSelect = "0"
+let gSelect = "0"
+let bSelect = "0"
+let colourSelectionWindow = new Panel()
+    .contains([
+        new Title("Add Colour"),
+        new HStack().contains([
+            new Panel().contains([
+                new Label("Red"),
+                new TextInput().placeholder("Input").bind("rSelect"),
+                new Label("Green"),
+                new TextInput().placeholder("Input").bind("gSelect"),
+                new Label("Blue"),
+                new TextInput().placeholder("Input").bind("bSelect"),
+            ]),
+            new VStack()
+                .contains([new Blank(120, 120)])
+                .background([0, 0, 0])
+                .cornerRadius(10)
+                .align("center"),
+        ]),
+        new HStack().contains([
+            new Button(35, 35)
+                .contains(new Icon(X_CIRCLE_ICON))
+                .background(Color.nearInverse, "default")
+                .background(Color.nudge(Color.nearInverse, 2), "hover")
+                .background(Color.nudge(Color.nearInverse, 4), "pressed")
+                .command(() => {
+                    showColourSelectionWindow = false;
+                    inEditor = true;
+                    colourSelectionWindow.phantom(true)
+                })
+            ,
+            new Blank(130, 1),
+            new Button(35, 35)
+                .command(() => {
+                    if (rSelect !== "" && gSelect !== "" && bSelect !== "") {
+                        showColourSelectionWindow = false;
+                        inEditor = true;
+                        colourSelectionWindow.phantom(true)
+                        addColourToPalette([parseFloat(rSelect), parseFloat(gSelect), parseFloat(bSelect)])
+                    }
+                })
+                .contains(new Icon(PLUS_CIRCLE_ICON))
+                .background(Color.nearInverse, "default")
+                .background(Color.nudge(Color.nearInverse, 2), "hover")
+                .background(Color.nudge(Color.nearInverse, 4), "pressed")
+            ,
+        ])
+    ])
+    .border(Color.primary)
+    .cornerRadius(10)
+    .phantom(true)

@@ -13,6 +13,7 @@ let gridLog = [];
 
 function setup() {
     createCanvas(windowWidth, windowHeight).parent("canvasParent")
+    addingColour = color(0, 0, 0)
 }
 
 function draw() {
@@ -31,6 +32,8 @@ function draw() {
                 grid[row].push("")
             }
         }
+
+        decideGridPanel.phantom(true)
 
         gridLog.push(copyGrid(grid))
 
@@ -65,56 +68,65 @@ function draw() {
         }
         pop()
 
-        if (selected.selectedTool != "" && mouseOnGrid()) {
-            switch(selected.selectedTool) {
-                case "brush":
-                    cursor("none")
-                    BRUSH_CURSOR.render(mouseX-2, mouseY-22)
-                    if (mouseIsPressed && mouseButton == LEFT) {
-                        brushFunction()
+        if (inEditor) {
+            if (selected.selectedTool != "" && mouseOnGrid()) {
+                switch(selected.selectedTool) {
+                    case "brush":
+                        cursor("none")
+                        BRUSH_CURSOR.render(mouseX-2, mouseY-22)
+                        if (mouseIsPressed && mouseButton == LEFT) {
+                            brushFunction()
+                        }
+                        break;
+                    case "eraser":
+                        cursor("none")
+                        ERASER_CURSOR.render(mouseX-5, mouseY-20)
+                        if (mouseIsPressed && mouseButton == LEFT) {
+                            eraserFunction()
+                        }
+                        break;
+                    case "dropper":
+                        cursor("none")
+                        DROPPER_CURSOR.render(mouseX-2, mouseY-22)
+                        if (mouseIsPressed && mouseButton == LEFT) {
+                            dropperFunction()
+                        }
+                        break;
+                    case "bucket":
+                        cursor("none")
+                        BUCKET_CURSOR.render(mouseX-4, mouseY-16)
+                        if (mouseIsPressed && mouseButton == LEFT) {
+                            bucketFunction()
+                        }
+                        break;
+                }
+            }
+    
+            switch (selected.selectedTool) {
+                case "pan":
+                    if (mouseIsPressed) {
+                        cursor('grabbing')
+                    }
+                    else {
+                        cursor("grab")
                     }
                     break;
-                case "eraser":
+                case "zoom":
                     cursor("none")
-                    ERASER_CURSOR.render(mouseX-5, mouseY-20)
-                    if (mouseIsPressed && mouseButton == LEFT) {
-                        eraserFunction()
-                    }
-                    break;
-                case "dropper":
-                    cursor("none")
-                    DROPPER_CURSOR.render(mouseX-2, mouseY-22)
-                    if (mouseIsPressed && mouseButton == LEFT) {
-                        dropperFunction()
-                    }
-                    break;
-                case "bucket":
-                    cursor("none")
-                    BUCKET_CURSOR.render(mouseX-4, mouseY-16)
-                    if (mouseIsPressed && mouseButton == LEFT) {
-                        bucketFunction()
-                    }
+                    ZOOM_CURSOR.render(mouseX-11, mouseY-11)
                     break;
             }
         }
 
-        switch (selected.selectedTool) {
-            case "pan":
-                if (mouseIsPressed) {
-                    cursor('grabbing')
-                }
-                else {
-                    cursor("grab")
-                }
-                break;
-            case "zoom":
-                cursor("none")
-                ZOOM_CURSOR.render(mouseX-11, mouseY-11)
-                break;
-        }
-
         controlPanel.render(0, (windowHeight-controlPanel.height)/2)
         navPanel.render(windowWidth-navPanel.width, (windowHeight-navPanel.height)/2)
+
+        if (showColourSelectionWindow) {
+            if (rSelect !== "" && gSelect !== "" && bSelect !== "") {
+                colourSelectionWindow.contents[1].contents[1].background(color(parseFloat(rSelect), parseFloat(gSelect), parseFloat(bSelect)))
+            }
+            colourSelectionWindow.render((windowWidth-colourSelectionWindow.width)/2, (windowHeight-colourSelectionWindow.height)/2)
+        }
     }
 }
 
@@ -150,6 +162,7 @@ function mousePressed() {
             decideGridPanel.onMousePressed()
             controlPanel.onMousePressed()
             navPanel.onMousePressed()
+            colourSelectionWindow.onMousePressed()
             break;
         case CENTER:
             if (inEditor) {
@@ -166,6 +179,7 @@ function mouseReleased() {
             decideGridPanel.onMouseReleased()
             controlPanel.onMouseReleased()
             navPanel.onMouseReleased()
+            colourSelectionWindow.onMouseReleased()
 
             if (selected.selectedTool == "pan") {
                 panStopFunction()
@@ -184,6 +198,7 @@ function keyPressed() {
     controlPanel.onKeyPressed()
     navPanel.onKeyPressed()
     hotkey.onKeyPressed()
+    colourSelectionWindow.onKeyPressed()
 }
 
 function mouseWheel(event) {
